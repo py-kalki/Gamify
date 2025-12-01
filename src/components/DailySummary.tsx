@@ -1,17 +1,27 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Zap } from 'lucide-react';
-import { fetchTodayActivity, calculateStats, type GamificationStats } from '../lib/gamification';
+import { fetchTodayActivity, calculateStats, calculateStreak, fetchActivityRange, type GamificationStats } from '../lib/gamification';
+import { subDays } from 'date-fns';
 
 export function DailySummary() {
     const [stats, setStats] = useState<GamificationStats | null>(null);
+    const [streak, setStreak] = useState(0);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         async function loadData() {
             const events = await fetchTodayActivity();
             const calculatedStats = calculateStats(events);
+
+            // Fetch streak
+            const end = new Date();
+            const start = subDays(end, 30);
+            const rangeEvents = await fetchActivityRange(start, end);
+            const streakData = calculateStreak(rangeEvents);
+
             setStats(calculatedStats);
+            setStreak(streakData.current);
             setLoading(false);
         }
         loadData();
@@ -32,7 +42,6 @@ export function DailySummary() {
         <div className="w-80 bg-surface border-l border-white/10 p-6 flex flex-col h-screen overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold">Daily Summary</h2>
-                <SettingsIcon className="w-4 h-4 text-gray-400 cursor-pointer hover:text-white" />
             </div>
 
             {/* Work Hours */}
@@ -92,12 +101,20 @@ export function DailySummary() {
                         <Zap className="w-4 h-4 text-yellow-400 mr-2" />
                         Level {stats?.level || 0}
                     </h3>
-                    <div className="text-xs font-bold text-yellow-400">{stats?.xp || 0} XP</div>
+                    <div className="flex items-center gap-3">
+                        <div className="text-xs font-bold text-orange-400 flex items-center" title="Current Streak">
+                            <span className="mr-1">🔥</span> {streak}
+                        </div>
+                        <div className="text-xs font-bold text-yellow-400">{stats?.xp || 0} XP</div>
+                    </div>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-3 max-h-[150px] overflow-y-auto pr-1 custom-scrollbar">
                     <QuestItem title="Deep Work" desc="Focus for 2 hrs" progress={Math.min(100, (stats?.productiveTime || 0) / (2 * 3600) * 100)} xp={100} />
                     <QuestItem title="Code Warrior" desc="Edit 5 files" progress={40} xp={50} />
+                    <QuestItem title="Early Bird" desc="Start before 9 AM" progress={100} xp={30} />
+                    <QuestItem title="Night Owl" desc="Work after 8 PM" progress={0} xp={30} />
+                    <QuestItem title="Consistency" desc="3 day streak" progress={Math.min(100, (streak / 3) * 100)} xp={100} />
                 </div>
             </div>
         </div>

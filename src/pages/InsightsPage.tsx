@@ -2,11 +2,18 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, Calendar, Clock, Award } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { fetchHeatmapData, fetchHourlyStats, type HeatmapData, type HourlyData } from '../lib/gamification';
+import { fetchHeatmapData, fetchHourlyStats, fetchActivityRange, calculateStreak, type HeatmapData, type HourlyData } from '../lib/gamification';
+import { subDays } from 'date-fns';
 
 export function InsightsPage() {
     const [heatmapData, setHeatmapData] = useState<HeatmapData[]>([]);
     const [hourlyData, setHourlyData] = useState<HourlyData[]>([]);
+    const [stats, setStats] = useState({
+        dailyAverage: '0h 0m',
+        mostProductiveHour: 'N/A',
+        currentStreak: 0,
+        longestStreak: 0
+    });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -17,6 +24,36 @@ export function InsightsPage() {
             ]);
             setHeatmapData(heatmap);
             setHourlyData(hourly);
+
+            // Calculate Daily Average (Real)
+            const end = new Date();
+            const start = subDays(end, 7);
+            const rangeEvents = await fetchActivityRange(start, end);
+            const totalDuration = rangeEvents.reduce((acc, curr) => acc + curr.duration, 0);
+            const avgSeconds = totalDuration / 7;
+            const avgHours = Math.floor(avgSeconds / 3600);
+            const avgMinutes = Math.floor((avgSeconds % 3600) / 60);
+
+            // Finding most productive hour
+            const bestHour = hourly.reduce((max, curr) => curr.score > max.score ? curr : max, hourly[0]);
+
+            // Calculate Streak
+            // We need more history for streak, let's use the 90 days range we fetched for heatmap?
+            // Actually fetchHeatmapData fetches range but returns heatmap data. 
+            // Let's fetch a longer range for streak or reuse heatmap logic if we can access the raw events there?
+            // fetchHeatmapData implementation in gamification.ts fetches events internally. 
+            // Let's just fetch 30 days for streak here to be safe and quick.
+            const streakStart = subDays(new Date(), 30);
+            const streakEvents = await fetchActivityRange(streakStart, new Date());
+            const streak = calculateStreak(streakEvents);
+
+            setStats({
+                dailyAverage: `${avgHours}h ${avgMinutes}m`,
+                mostProductiveHour: bestHour ? bestHour.hour : 'N/A',
+                currentStreak: streak.current,
+                longestStreak: streak.longest
+            });
+
             setLoading(false);
         }
         loadData();
@@ -54,7 +91,7 @@ export function InsightsPage() {
                         </div>
                         <span className="text-green-400 text-sm font-medium">+12% vs last week</span>
                     </div>
-                    <div className="text-3xl font-bold mb-1">6h 42m</div>
+                    <div className="text-3xl font-bold mb-1">{stats.dailyAverage}</div>
                     <div className="text-sm text-gray-400">Daily Average</div>
                 </motion.div>
 
@@ -70,7 +107,7 @@ export function InsightsPage() {
                         </div>
                         <span className="text-green-400 text-sm font-medium">Top 5%</span>
                     </div>
-                    <div className="text-3xl font-bold mb-1">11 AM</div>
+                    <div className="text-3xl font-bold mb-1">{stats.mostProductiveHour}</div>
                     <div className="text-sm text-gray-400">Most Productive Time</div>
                 </motion.div>
 
@@ -86,8 +123,8 @@ export function InsightsPage() {
                         </div>
                         <span className="text-yellow-500 text-sm font-medium">Current Streak</span>
                     </div>
-                    <div className="text-3xl font-bold mb-1">14 Days</div>
-                    <div className="text-sm text-gray-400">Longest: 21 Days</div>
+                    <div className="text-3xl font-bold mb-1">{stats.currentStreak} Days</div>
+                    <div className="text-sm text-gray-400">Longest: {stats.longestStreak} Days</div>
                 </motion.div>
             </div>
 

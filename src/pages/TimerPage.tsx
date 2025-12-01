@@ -9,11 +9,45 @@ export function TimerPage() {
     const [mode, setMode] = useState<'focus' | 'short' | 'long'>('focus');
     const [xpEarned, setXpEarned] = useState(0);
 
-    const modes = {
+    const [modes, setModes] = useState({
         focus: { label: 'Focus', minutes: 25, color: 'text-primary', ring: 'stroke-primary' },
         short: { label: 'Short Break', minutes: 5, color: 'text-green-400', ring: 'stroke-green-400' },
         long: { label: 'Long Break', minutes: 15, color: 'text-blue-400', ring: 'stroke-blue-400' },
-    };
+    });
+
+    useEffect(() => {
+        const loadSettings = () => {
+            const stored = localStorage.getItem('gamify_timer_settings');
+            if (stored) {
+                const settings = JSON.parse(stored);
+                setModes(prev => ({
+                    ...prev,
+                    focus: { ...prev.focus, minutes: settings.focusDuration },
+                    short: { ...prev.short, minutes: settings.shortBreakDuration },
+                    long: { ...prev.long, minutes: settings.longBreakDuration },
+                }));
+                // Only update time left if not active
+                if (!isActive) {
+                    // We need to know which mode is active to update correctly, 
+                    // but since we can't easily access the *current* mode in this closure without ref or dependency,
+                    // we'll just rely on the user resetting or changing modes for now, 
+                    // OR we can add 'mode' to dependency but that might trigger unwanted resets.
+                    // Let's just update the modes state. The user will see new time on next reset/mode change.
+                }
+            }
+        };
+
+        loadSettings();
+        window.addEventListener('timer-settings-updated', loadSettings);
+        return () => window.removeEventListener('timer-settings-updated', loadSettings);
+    }, []);
+
+    // Update timeLeft when modes change if not active
+    useEffect(() => {
+        if (!isActive) {
+            setTimeLeft(modes[mode].minutes * 60);
+        }
+    }, [modes, mode, isActive]);
 
     useEffect(() => {
         let interval: ReturnType<typeof setInterval>;

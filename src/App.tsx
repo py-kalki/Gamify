@@ -10,25 +10,31 @@ import { InsightsPage } from './pages/InsightsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { WidgetPage } from './pages/WidgetPage';
 import { ControlBar } from './components/ControlBar';
+import { TopBar } from './components/TopBar';
+import { DebugOverlay } from './components/DebugOverlay';
 
 function App() {
   return (
     <BrowserRouter>
-      <div className="flex h-screen bg-background text-white overflow-hidden font-sans">
+      <div className="flex h-screen bg-background text-[var(--color-text)] overflow-hidden font-sans relative transition-colors duration-300">
         <Sidebar />
-        <main className="flex-1 flex overflow-hidden">
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/timer" element={<TimerPage />} />
-            <Route path="/activity" element={<ActivityPage />} />
-            <Route path="/productivity/trends" element={<TrendsPage />} />
-            <Route path="/productivity/goals" element={<GoalsPage />} />
-            <Route path="/productivity/insights" element={<InsightsPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/widget" element={<WidgetPage />} />
-          </Routes>
+        <div className="flex-1 flex flex-col overflow-hidden relative">
+          <TopBar />
+          <main className="flex-1 overflow-y-auto pb-20">
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/timer" element={<TimerPage />} />
+              <Route path="/activity" element={<ActivityPage />} />
+              <Route path="/productivity/trends" element={<TrendsPage />} />
+              <Route path="/productivity/goals" element={<GoalsPage />} />
+              <Route path="/productivity/insights" element={<InsightsPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/widget" element={<WidgetPage />} />
+            </Routes>
+          </main>
           <ControlBar />
-        </main>
+          <DebugOverlay />
+        </div>
       </div>
     </BrowserRouter>
   );

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Home,
@@ -21,11 +21,38 @@ interface SidebarProps {
 export function Sidebar({ className }: SidebarProps) {
     const [isHovered, setIsHovered] = useState(false);
     const [isProductivityOpen, setIsProductivityOpen] = useState(true);
+    const [profile, setProfile] = useState({
+        name: localStorage.getItem('gamify_user_name') || 'Gamify',
+        avatar: localStorage.getItem('gamify_user_avatar') || ''
+    });
+
+    useEffect(() => {
+        const updateProfile = () => {
+            setProfile({
+                name: localStorage.getItem('gamify_user_name') || 'Gamify',
+                avatar: localStorage.getItem('gamify_user_avatar') || ''
+            });
+        };
+
+        window.addEventListener('storage', updateProfile);
+        // Custom event for same-window updates
+        window.addEventListener('profile-updated', updateProfile);
+
+        // Poll for changes just in case (since storage event only fires on other windows)
+        const interval = setInterval(updateProfile, 1000);
+
+        return () => {
+            window.removeEventListener('storage', updateProfile);
+            window.removeEventListener('profile-updated', updateProfile);
+            clearInterval(interval);
+        };
+    }, []);
 
     const navItems = [
         { icon: Home, label: 'Home', href: '/' },
         { icon: Timer, label: 'Timer', href: '/timer' },
         { icon: Activity, label: 'Activity', href: '/activity' },
+        { icon: Settings, label: 'Settings', href: '/settings' },
     ];
 
     const productivityItems = [
@@ -46,8 +73,12 @@ export function Sidebar({ className }: SidebarProps) {
         >
             {/* Logo / Header */}
             <div className="px-4 mb-8 flex items-center overflow-hidden whitespace-nowrap">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex-shrink-0 flex items-center justify-center">
-                    <span className="font-bold text-black">G</span>
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex-shrink-0 flex items-center justify-center overflow-hidden">
+                    {profile.avatar ? (
+                        <img src={profile.avatar} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                        <span className="font-bold text-black">{profile.name.charAt(0).toUpperCase()}</span>
+                    )}
                 </div>
                 <motion.span
                     className="ml-3 font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary"
@@ -55,7 +86,7 @@ export function Sidebar({ className }: SidebarProps) {
                     animate={{ opacity: isHovered ? 1 : 0 }}
                     transition={{ duration: 0.2 }}
                 >
-                    Gamify
+                    {profile.name}
                 </motion.span>
             </div>
 
@@ -79,21 +110,6 @@ export function Sidebar({ className }: SidebarProps) {
                     </a>
                 ))}
 
-                {/* Workspace Selector */}
-                <div className="mt-6 px-3">
-                    <button className="flex items-center w-full text-left text-gray-400 hover:text-white transition-colors overflow-hidden whitespace-nowrap">
-                        <Briefcase className="w-5 h-5 flex-shrink-0" />
-                        <motion.div
-                            className="ml-3 flex-1 flex items-center justify-between"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: isHovered ? 1 : 0 }}
-                            transition={{ duration: 0.2 }}
-                        >
-                            <span className="text-sm font-medium">PyKalki's Workspace</span>
-                            <ChevronDown className="w-4 h-4" />
-                        </motion.div>
-                    </button>
-                </div>
 
                 {/* Productivity Section */}
                 <div className="mt-6">
@@ -153,17 +169,6 @@ export function Sidebar({ className }: SidebarProps) {
                         Open Widget
                     </motion.span>
                 </button>
-                <a href="/settings" className="w-full flex items-center px-3 py-2.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors overflow-hidden whitespace-nowrap">
-                    <Settings className="w-5 h-5 flex-shrink-0" />
-                    <motion.span
-                        className="ml-3 text-sm font-medium"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: isHovered ? 1 : 0 }}
-                        transition={{ duration: 0.2 }}
-                    >
-                        Settings
-                    </motion.span>
-                </a>
             </div>
         </motion.div>
     );
