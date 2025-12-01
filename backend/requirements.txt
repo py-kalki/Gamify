@@ -1,0 +1,5 @@
+fastapi
+uvicorn
+peewee
+pywin32
+python-multipart
