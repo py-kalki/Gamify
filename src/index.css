@@ -13,10 +13,13 @@
 :root {
   /* Light mode defaults */
   --color-background: #ffffff;
-  --color-surface: #f3f4f6;
-  --color-primary: #00f0ff;
-  --color-secondary: #bf00ff;
-  --color-text: #0f172a;
+  --color-surface: #f8fafc;
+  --color-primary: #2563eb;
+  /* Blue-600 */
+  --color-secondary: #7c3aed;
+  /* Violet-600 */
+  --color-text: #020617;
+  /* Slate-950 - Very dark for contrast */
   color-scheme: light;
 }
 
@@ -41,4 +44,6 @@ body {
   color: var(--color-text);
   font-family: 'Inter', sans-serif;
   transition: background-color 0.3s, color 0.3s;
+  user-select: none;
+  -webkit-user-select: none;
 }

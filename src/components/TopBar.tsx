@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Sun, Moon, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Sun, Moon, X, Square } from 'lucide-react';
 
 interface TopBarProps {
     onSwitchToWidget?: () => void;
@@ -39,6 +39,12 @@ export function TopBar({ onSwitchToWidget }: TopBarProps) {
     const handleMinimize = () => {
         if (window.electron && window.electron.windowControl) {
             window.electron.windowControl('minimize');
+        }
+    };
+
+    const handleMaximize = () => {
+        if (window.electron && window.electron.windowControl) {
+            window.electron.windowControl('maximize');
         }
     };
 
@@ -93,6 +99,12 @@ export function TopBar({ onSwitchToWidget }: TopBarProps) {
                     className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
                 >
                     <div className="w-3 h-px bg-current" />
+                </button>
+                <button
+                    onClick={handleMaximize}
+                    className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+                >
+                    <Square className="w-3.5 h-3.5" />
                 </button>
                 <button
                     onClick={handleClose}

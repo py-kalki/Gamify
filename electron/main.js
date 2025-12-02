@@ -70,6 +70,7 @@ function createWindow() {
         frame: false, // Frameless for custom UI and widget shape
         transparent: true, // Transparent for widget shape
         hasShadow: true,
+        resizable: true, // Allow resizing
         skipTaskbar: true, // Start hidden from taskbar (widget mode)
         webPreferences: {
             nodeIntegration: false,
@@ -130,8 +131,8 @@ ipcMain.on('set-mode', (event, mode) => {
         }, 100);
     } else if (mode === 'dashboard') {
         console.log('IPC: Switching to dashboard mode (1280x800)');
-        win.setResizable(true);
-        win.setMinimumSize(800, 600); // Restore min size for dashboard
+        win.setResizable(true); // Enable native resizing support
+        win.setMinimumSize(0, 0); // Remove constraints
         win.setBounds({ width: 1280, height: 800 });
         win.center();
         win.setAlwaysOnTop(false);
@@ -145,6 +146,13 @@ ipcMain.on('window-control', (event, action) => {
     if (!win) return;
 
     if (action === 'minimize') win.minimize();
+    if (action === 'maximize') {
+        if (win.isMaximized()) {
+            win.unmaximize();
+        } else {
+            win.maximize();
+        }
+    }
     if (action === 'close') {
         // Custom Close Logic: Switch to Widget Mode
         win.webContents.send('force-widget-mode');
@@ -171,7 +179,10 @@ ipcMain.on('widget-resize', (event, { width, height }) => {
 ipcMain.on('resize-window', (event, { width, height }) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (win) {
-        win.setSize(Math.round(width), Math.round(height));
+        if (win.isMaximized()) {
+            win.unmaximize();
+        }
+        win.setBounds({ width: Math.round(width), height: Math.round(height) });
     }
 });
 
