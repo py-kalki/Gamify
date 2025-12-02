@@ -36,7 +36,8 @@
 }
 
 body {
-  background-color: var(--color-background);
+  background-color: transparent;
+  /* Allow transparency for widget */
   color: var(--color-text);
   font-family: 'Inter', sans-serif;
   transition: background-color 0.3s, color 0.3s;
