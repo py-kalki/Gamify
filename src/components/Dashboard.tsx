@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { format, getHours, getMinutes, parseISO, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, subDays, eachDayOfInterval, eachMonthOfInterval } from 'date-fns';
 import { DailySummary } from './DailySummary';
 import { fetchTodayActivity, fetchActivityRange, type AWEvent, cleanAppName, getAppCategory, type Category, CATEGORY_COLORS } from '../lib/gamification';
+import { processTimelineEvents } from '../lib/timelineUtils';
 import { ZoomIn, ZoomOut, X, ChevronDown } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
@@ -174,41 +175,54 @@ export function Dashboard() {
                                     {/* Grid Lines */}
                                     <div className="absolute inset-x-0 top-1/2 border-t border-white/5 border-dashed" />
 
-                                    {events.map((event, index) => {
-                                        const style = getEventStyle(event, hour);
-                                        if (!style) return null;
+                                    {(() => {
+                                        // Filter events for this hour
+                                        const hourEvents = events.filter(e => getHours(parseISO(e.timestamp)) === hour);
 
-                                        const startTime = parseISO(event.timestamp);
-                                        const endTime = new Date(startTime.getTime() + event.duration * 1000);
-                                        const timeRange = `${format(startTime, 'h:mm a')} - ${format(endTime, 'h:mm a')}`;
+                                        // Process using our new utility
+                                        const blocks = processTimelineEvents(hourEvents);
 
-                                        return (
-                                            <motion.div
-                                                key={`${event.timestamp}-${index}`}
-                                                initial={{ opacity: 0, x: -10 }}
-                                                animate={{ opacity: 1, x: 0 }}
-                                                className="absolute left-16 right-4 rounded-md border-l-4 overflow-hidden hover:z-50 hover:brightness-110 transition-all cursor-pointer shadow-sm group"
-                                                style={style}
-                                                title={`${cleanAppName(event.data.app)} - ${event.data.title}\n${timeRange}`}
-                                                onClick={() => setSelectedEvent(event)}
-                                            >
-                                                {/* Only show details if height is sufficient (e.g. > 20px) or if zoomed in */}
-                                                {(parseFloat(style.height as string) > 5 || pixelsPerHour > 60) && (
-                                                    <div className="px-3 py-1.5 h-full flex flex-col justify-center">
-                                                        <div className="font-semibold text-xs text-white truncate leading-tight mb-0.5">
-                                                            {event.data.title || cleanAppName(event.data.app)}
-                                                        </div>
-                                                        {parseFloat(style.height as string) > 10 && (
-                                                            <div className="flex items-center justify-between text-[10px] text-white/70 leading-none">
-                                                                <span className="truncate mr-2 opacity-80">{cleanAppName(event.data.app)}</span>
-                                                                <span className="whitespace-nowrap font-mono opacity-60">{timeRange}</span>
+                                        return blocks.map((block, index) => {
+                                            const startMinute = getMinutes(block.start);
+                                            const top = (startMinute / 60) * 100;
+                                            // Calculate height based on duration relative to an hour (3600s)
+                                            // Ensure a minimum visible height
+                                            const height = Math.max(2, (block.duration / 3600) * 100);
+                                            const color = CATEGORY_COLORS[block.category];
+                                            const timeRange = `${format(block.start, 'h:mm a')} - ${format(block.end, 'h:mm a')}`;
+                                            const appList = Array.from(block.apps).join(', ');
+
+                                            return (
+                                                <motion.div
+                                                    key={`${hour}-${index}`}
+                                                    initial={{ opacity: 0, x: -10 }}
+                                                    animate={{ opacity: 1, x: 0 }}
+                                                    className="absolute left-4 right-4 rounded-md border-l-4 overflow-hidden hover:z-50 hover:brightness-110 transition-all cursor-pointer shadow-sm group"
+                                                    style={{
+                                                        top: `${top}%`,
+                                                        height: `${height}%`,
+                                                        backgroundColor: `${color}80`,
+                                                        borderColor: color,
+                                                        minHeight: '4px'
+                                                    }}
+                                                    title={`${block.category}\n${timeRange}\nApps: ${appList}`}
+                                                >
+                                                    {(parseFloat(height.toString()) > 5 || pixelsPerHour > 60) && (
+                                                        <div className="px-3 py-0.5 h-full flex flex-col justify-center">
+                                                            <div className="font-bold text-xs text-white truncate leading-tight">
+                                                                {block.category}
                                                             </div>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </motion.div>
-                                        );
-                                    })}
+                                                            {parseFloat(height.toString()) > 10 && (
+                                                                <div className="text-[10px] text-white/70 truncate">
+                                                                    {appList}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </motion.div>
+                                            );
+                                        });
+                                    })()}
                                 </div>
 
                                 {/* Right side activity indicator (cyan bar) */}

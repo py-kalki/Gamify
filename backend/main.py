@@ -22,6 +22,8 @@ app.add_middleware(
 # Initialize DB
 init_db()
 
+from categories import get_category
+
 # --- Tracker Logic ---
 def get_active_window():
     try:
@@ -30,7 +32,8 @@ def get_active_window():
         process = psutil.Process(pid)
         app_name = process.name()
         title = win32gui.GetWindowText(hwnd)
-        return {"app": app_name, "title": title}
+        category = get_category(app_name, title)
+        return {"app": app_name, "title": title, "category": category}
     except Exception:
         return None
 

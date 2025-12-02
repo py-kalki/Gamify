@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Home,
@@ -21,6 +22,7 @@ interface SidebarProps {
 export function Sidebar({ className }: SidebarProps) {
     const [isHovered, setIsHovered] = useState(false);
     const [isProductivityOpen, setIsProductivityOpen] = useState(true);
+    const location = useLocation();
     const [profile, setProfile] = useState({
         name: localStorage.getItem('gamify_user_name') || 'Gamify',
         avatar: localStorage.getItem('gamify_user_avatar') || ''
@@ -93,10 +95,15 @@ export function Sidebar({ className }: SidebarProps) {
             {/* Main Navigation */}
             <nav className="flex-1 px-2 space-y-1">
                 {navItems.map((item) => (
-                    <a
+                    <Link
                         key={item.label}
-                        href={item.href}
-                        className="flex items-center px-3 py-2.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors group relative overflow-hidden whitespace-nowrap"
+                        to={item.href}
+                        className={cn(
+                            "flex items-center px-3 py-2.5 rounded-lg transition-colors group relative overflow-hidden whitespace-nowrap",
+                            location.pathname === item.href
+                                ? "bg-white/10 text-white"
+                                : "text-gray-400 hover:text-white hover:bg-white/5"
+                        )}
                     >
                         <item.icon className="w-5 h-5 flex-shrink-0" />
                         <motion.span
@@ -107,7 +114,7 @@ export function Sidebar({ className }: SidebarProps) {
                         >
                             {item.label}
                         </motion.span>
-                    </a>
+                    </Link>
                 ))}
 
 
@@ -138,14 +145,19 @@ export function Sidebar({ className }: SidebarProps) {
                                 className="overflow-hidden"
                             >
                                 {productivityItems.map((item) => (
-                                    <a
+                                    <Link
                                         key={item.label}
-                                        href={item.href}
-                                        className="flex items-center pl-11 pr-3 py-2 text-sm text-gray-500 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+                                        to={item.href}
+                                        className={cn(
+                                            "flex items-center pl-11 pr-3 py-2 text-sm rounded-lg transition-colors",
+                                            location.pathname === item.href
+                                                ? "text-white bg-white/5"
+                                                : "text-gray-500 hover:text-white hover:bg-white/5"
+                                        )}
                                     >
                                         <item.icon className="w-4 h-4 mr-2" />
                                         {item.label}
-                                    </a>
+                                    </Link>
                                 ))}
                             </motion.div>
                         )}

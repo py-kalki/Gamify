@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, ipcMain, Tray, Menu } from 'electron';
+import { app, BrowserWindow, shell, ipcMain, Tray, Menu, nativeImage } from 'electron';
 import path from 'path';
 import { spawn } from 'child_process';
 
@@ -25,12 +25,23 @@ function startPythonBackend() {
 
 function createTray() {
     try {
-        // Use a placeholder icon or try to load one. 
-        // If icon is missing, Tray might fail on some OS, but usually works with empty/default.
-        // Ideally we should have an icon.
-        const iconPath = path.join(app.getAppPath(), 'public', 'vite.svg');
+        // Try to resolve icon path for both dev and prod
+        let iconPath = path.join(app.getAppPath(), 'public', 'vite.svg');
+        if (process.env.NODE_ENV === 'development') {
+            iconPath = path.join(__dirname, '../public/vite.svg');
+        }
+
         console.log("Creating tray with icon:", iconPath);
-        tray = new Tray(iconPath);
+
+        // Use nativeImage for better support
+        const icon = nativeImage.createFromPath(iconPath);
+
+        try {
+            tray = new Tray(icon);
+        } catch (e) {
+            console.warn("Could not load tray icon, using default or empty:", e);
+            return;
+        }
 
         const contextMenu = Menu.buildFromTemplate([
             {
@@ -81,6 +92,19 @@ function createWindow() {
 
     // Load the local dev server
     mainWindow.loadURL('http://localhost:5173');
+
+    // Open DevTools for debugging
+    mainWindow.webContents.openDevTools({ mode: 'detach' });
+
+    mainWindow.webContents.on('did-finish-load', () => {
+        console.log('Window loaded successfully');
+        mainWindow.show();
+        mainWindow.focus();
+    });
+
+    mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+        console.error('Failed to load window:', errorCode, errorDescription);
+    });
 
     // Open external links in browser
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {

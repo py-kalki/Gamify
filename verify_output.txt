@@ -1,0 +1,11 @@
+﻿--- STARTING TIMELINE VERIFICATION ---
+Processing 6 raw events...
+  - Filtering system app: ShellExperienceHost (5s)
+  - Absorbing micro-event File Explorer (4s) into Code block
+
+--- RESULT ---
+[Code] 120s | Apps: Visual Studio Code
+[Code] 67s | Apps: Visual Studio Code
+[Browsing] 300s | Apps: Google Chrome
+[Code] 200s | Apps: Visual Studio Code
+--------------------------------------
